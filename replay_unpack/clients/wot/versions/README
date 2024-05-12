@@ -1,0 +1,45 @@
+1. first error in 1_19_0 or 1_24_0 version
+Copy 'entity_defs' folder and 'entities.xml' from unpacked source\res\scripts
+Remove lines from versions/x_xx_x/scripts/entity_defs/Account.def
+  <xmlns:xsi>	http://www.w3.org/2001/XMLSchema-instance	</xmlns:xsi>
+  <xsi:noNamespaceSchemaLocation>	../../../tools/schema/entity_def.xsd	</xsi:noNamespaceSchemaLocation>
+
+2. Building Definitions  core.entity_def.definitions.py
+called given arg: '...\\replay_unpack\\clients\\wot\\versions\\1_24_0'
+parsing entities starts with '.../scripts/entities.xml'
+The xml contains:
+    |- ClientServerEntities
+        |- Account
+        |- Avatar
+        |- ...
+        |- Vehicle		<<< The problem happens here
+
+3. Datatype names 'BLOB', 'FLOAT' etc. will have internal python equivalent types, and built up by 
+class Alias's dict SIMPLE_TYPES
+The alias list is built from '.../scripts/entity_defs/alias.xml'
+Some special TYPES (defined in other.py) are:
+Blob - BLOB
+String - STRING
+String - UNICODE_STRING
+Python - PYTHON
+FixedDict - FIXED_DICT , AllowNone option
+Array - ARRAY
+Array - TUPLE
+UserType - USER_TYPE
+
+4. While parsing Vehicle.def , BaseDataObjectDef will follow the order of searching 
+"Implements", "Properties", and "Volatile"  
+some other such as "ClientMethods", "BaseMethods" "NetworkCompression" sections are not processed
+
+5. recursive build FIXED_DICT
+type_ = alias.get_data_type_from_section(section.find('Type'))
+        default = section.find('Default')
+        flags = section.find('Flags').text.strip()
+
+        return cls(section.tag, type_, flags=flags, default=default)
+
+6. while reading packets parsing for CellPlayerCreate properties update,
+in the reading of index=11 i.e. ammoViews, exception of wrong array size reading occured!
+
+:Data value: 00 00 00 00 00 00 00 00 | 00 00 00 00 00 00 00 00 00 00 00 00 | 00 00   | 00 00 01   | dd 9b 23 01 | 00 00 00 00 | 06 a6 28 7c 82 55 55 2a |00 00 |02 01 00 00 00 00
+time					shotPoint			   zoom, mode, ob,num,team  vID, 	  ,    ,  , ,  PhysicalData		,pitch,	 wrong array of ammoViews

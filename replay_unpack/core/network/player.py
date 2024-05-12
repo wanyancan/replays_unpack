@@ -35,8 +35,10 @@ class PlayerBase:
             try:
                 self._process_packet(packet.time, self._deserialize_packet(packet))
             except Exception:
-                logging.exception("Problem with packet %s:%s:%s",
+                logging.exception("Problem with packet at time:%s, type::%s, packetClass:%s",
                                   packet.time, packet.type, self._mapping.get(packet.type))
+                packet.raw_data.seek(0)
+                logging.exception('packet %s %s', hex(packet.type), str(packet.raw_data.read().hex()))
                 if strict_mode:
                     raise
 

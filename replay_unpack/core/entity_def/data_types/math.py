@@ -51,6 +51,9 @@ class Vector3(_MathType):
     STRUCT_TYPE = 'fff'
     _DATA_SIZE = 12
 
+    def _get_default_value_from_section(self, value: Element):
+        return list(map(float, value.text.strip().split(' ')))
+
 
 class Vector4(_MathType):
     """VECTOR4 — Size(bytes): 16
@@ -59,3 +62,6 @@ class Vector4(_MathType):
     """
     STRUCT_TYPE = 'ffff'
     _DATA_SIZE = 16
+
+    def _get_default_value_from_section(self, value: Element):
+        return list(map(float, value.text.strip().split(' ')))

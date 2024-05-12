@@ -5,6 +5,8 @@ import struct
 from replay_unpack.core import (
     Entity
 )
+from replay_unpack.core.entity_def.data_types import FixedDict
+
 from replay_unpack.core.network.player import ControlledPlayerBase
 from .helper import get_definitions, get_controller
 from .network.packets import (
@@ -36,7 +38,7 @@ class ReplayPlayer(ControlledPlayerBase):
     def _process_packet(self, time, packet):
 
         if isinstance(packet, Map):
-            logging.debug('Welcome to map %s: %s', packet.name, packet.arenaId)
+            logging.info('Welcome to map %s: arenaID: %s', packet.name, packet.arenaId)
             self._battle_controller.map = packet.name
 
         elif isinstance(packet, BasePlayerCreate):
@@ -66,8 +68,21 @@ class ReplayPlayer(ControlledPlayerBase):
             # cell is internal, so props are stored in order of xml file
             io = packet.value.io()
             for index, prop in enumerate(cell_player.client_properties_internal):
-                cell_player.set_client_property_internal(index, io)
+                try:
+                    stream_pos = io.tell()
+                    if isinstance(prop._type, FixedDict):
+                        cell_player.set_client_property_internal(index, io)
+                    else:
+                        cell_player.set_client_property_internal(index, io)
+                except Exception:
+                    io.seek(stream_pos)
+                    logging.exception("CellPlayerCreate packet error on %s \n parseing offset %d of data %s",
+                                      prop, stream_pos, io.read().hex(' '))
+                    io.seek(0)
+                    logging.exception("Data value: %s", io.read().hex(' '))
+                    raise
             # TODO: why this assert fails?
+            # Because the order matters !
             # assert io.read() == b''
             self._battle_controller.create_entity(cell_player)
 

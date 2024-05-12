@@ -28,8 +28,13 @@ class DataType:
         """
         if default is None:
             return self.DEFAULT_VALUE
-        logging.debug('Parsing default value for %s', self.__class__.__name__)
-        return self._get_default_value_from_section(default)
+        logging.debug('Parsing default value for %s to "%s"', self.__class__.__name__, default.text.strip())
+        try:
+            return self._get_default_value_from_section(default)
+        except RuntimeError:
+            logging.warning('Given default value for %s, but could not be assigned from "%s"',
+                            self.__class__.__name__, default.text.strip())
+            return self.DEFAULT_VALUE
 
     def create_from_stream(self, stream: BytesIO, header_size: int = 1):
         return self._get_value_from_stream(stream, header_size)

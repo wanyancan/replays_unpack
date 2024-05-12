@@ -12,6 +12,10 @@ REPLAYS = glob.glob(os.path.join(BASE_DIR, 'data', 'random_replays', '*/*.wowsre
           glob.glob(os.path.join(BASE_DIR, 'data', 'random_replays', '*/*.wotreplay')) + \
           glob.glob(os.path.join(BASE_DIR, 'data', 'random_replays', '*/*.wowpreplay'))
 
+import logging
+
+# Configure logging to display all levels of messages
+logging.basicConfig(level=logging.INFO)
 
 @ddt
 class TestRandomReplays(TestCase):

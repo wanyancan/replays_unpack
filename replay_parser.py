@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from json import JSONEncoder
+import re
 
 from replay_unpack.clients import wot, wows, wowp
 from replay_unpack.replay_reader import ReplayReader, ReplayInfo
@@ -51,11 +52,17 @@ class ReplayParser(object):
     def _get_hidden_data(self, replay: ReplayInfo):
         if replay.game == 'wot':
             # 'World of Tanks v.1.8.0.2 #252'
-            version = '.'.join(replay.engine_data.get('clientVersionFromXml')
-                               .replace('World of Tanks v.', '')
-                               .replace(' ', '.')
-                               .replace('#', '')
-                               .split('.')[:3])
+            # '坦克世界 v.1.19.1.0 #97'
+            mat = re.search(r"v.(?P<version>\d+\.\d+\.\d+).* #\d+", replay.engine_data.get('clientVersionFromXml'))
+            if mat:
+                version = mat.group('version')
+            else:
+                raise NotImplementedError
+            # version = '.'.join(replay.engine_data.get('clientVersionFromXml')
+            #                    .replace('World of Tanks v.', '')
+            #                    .replace(' ', '.')
+            #                    .replace('#', '')
+            #                    .split('.')[:3])
             player = wot.ReplayPlayer(version)
         elif replay.game == 'wows':
             player = wows.ReplayPlayer(replay.engine_data

@@ -129,6 +129,10 @@ class Python(_DataType):
         size, = unpack('B', stream.read(1))
         return stream.read(size)
 
+    def _get_default_value_from_section(self, section: etree.ElementBase):
+        assert isinstance(section.text, str)
+        return eval(section.text.strip())
+
 
 class FixedDict(_DataType):
 
@@ -186,6 +190,28 @@ class FixedDict(_DataType):
         for attr, value in self.attributes.items():
             size += value.get_size_in_bytes()
         return size
+
+    def _get_default_value_from_section(self, section: etree.ElementBase):
+        """ should process the below example
+        <remoteCamera>
+          <Type>	REMOTE_CAMERA_DATA	</Type>
+          <Flags>	OWN_CLIENT	</Flags>
+          <Default>
+            <time>	0	</time>
+            <shotPoint>	0 0 0	</shotPoint>
+            <zoom>	25	</zoom>
+            <mode>	0	</mode>
+          </Default>
+          <ExposedForReplay>	true	</ExposedForReplay>
+        </remoteCamera>
+        """
+        kw = PyFixedDict(self.attributes)
+        for key, _type in self.attributes.items():
+            prop = section.find(key)
+            if prop is not None:
+                obj = _type.get_default_value(prop)
+                kw[key] = obj   # _type.create_from_stream(stream, header_size=header_size)
+        return kw
 
     def __repr__(self):
         return "<FixedDict> {}".format({

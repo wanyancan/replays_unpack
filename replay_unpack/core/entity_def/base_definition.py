@@ -9,7 +9,7 @@ from typing import List, Dict, Any
 from lxml import etree
 
 from .constants import ENTITIES_DEFS_PATH, EntityFlags
-from .data_types import Alias, DataType, INFINITY
+from .data_types import Alias, DataType, INFINITY, FixedDict
 
 
 class BaseDataObjectDef:
@@ -103,7 +103,8 @@ class Property:
         type_ = alias.get_data_type_from_section(section.find('Type'))
         default = section.find('Default')
         flags = section.find('Flags').text.strip()
-
+        if isinstance(type_, FixedDict):
+            return cls(section.tag, type_, flags=flags, default=default)
         return cls(section.tag, type_, flags=flags, default=default)
 
     def create_from_stream(self, stream: BytesIO):

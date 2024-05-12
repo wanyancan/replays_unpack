@@ -134,8 +134,8 @@ class Entity:
     def set_client_property(self, exposed_index, payload: BytesIO):
         logging.debug('requested property %s of entity %s', exposed_index, self._spec.get_name())
         prop = self.client_properties[exposed_index]
-        logging.debug('setting %s client property %s', self._spec.get_name(), prop)
         value = prop.create_from_stream(payload)
+        logging.debug('setting %s client property %s with "%s"', self._spec.get_name(), prop, value)
         self.properties['client'][prop.get_name()] = value
         prop_hash = f"{self._spec.get_name()}_{prop.get_name()}"
         subscriptions = Entity._properties_subscriptions.get(prop_hash, [])
