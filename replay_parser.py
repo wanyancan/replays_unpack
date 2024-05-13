@@ -23,10 +23,11 @@ class ReplayParser(object):
     def __init__(self, replay_path, strict: bool = False, raw_data_output=None):
         self._replay_path = replay_path
         self._is_strict_mode = strict
-        self._reader = ReplayReader(replay_path)
+        self._reader = ReplayReader(replay_path, dump_binary=True)
         self._raw_data_output = raw_data_output
 
     def get_info(self):
+        logging.info("Parsing %s", self._replay_path)
         replay = self._reader.get_replay_data()
 
         error = None
