@@ -82,7 +82,10 @@ class ReplayParser(object):
             with open(self._raw_data_output, 'wb') as f:
                 f.write(replay.decrypted_data)
 
-        player.play(replay.decrypted_data, self._is_strict_mode)
+        replay_name = os.path.basename(self._replay_path)
+        dumpsplitfile = os.path.join(os.path.dirname(self._replay_path), '{}.split'.format(replay_name))
+
+        player.play(replay.decrypted_data, self._is_strict_mode, dumpfname=dumpsplitfile)
         return player.get_info()
 
 

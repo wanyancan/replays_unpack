@@ -11,15 +11,15 @@ from replay_unpack.core.network.player import ControlledPlayerBase
 from .helper import get_definitions, get_controller
 from .network.packets import (
     Map,
-    BasePlayerCreate,
-    CellPlayerCreate,
-    EntityCreate,
-    Position,
-    EntityMethod,
-    EntityProperty,
-    NestedProperty,
-    EntityEnter,
-    EntityLeave,
+    BasePlayerCreate,   # 0
+    CellPlayerCreate,   # 1
+    EntityCreate,       # 5
+    Position,           # 0a
+    EntityMethod,       # 08
+    EntityProperty,     # 07
+    NestedProperty,     # x24
+    EntityEnter,        # 3
+    EntityLeave,        # 4
     PACKETS_MAPPING
 )
 
@@ -36,7 +36,7 @@ class ReplayPlayer(ControlledPlayerBase):
         return PACKETS_MAPPING
 
     def _process_packet(self, time, packet):
-
+        ret = "_"
         if isinstance(packet, Map):
             logging.info('Welcome to map %s: arenaID: %s', packet.name, packet.arenaId)
             self._battle_controller.map = packet.name
@@ -127,3 +127,6 @@ class ReplayPlayer(ControlledPlayerBase):
             logging.debug('nested property request for id=%s isSlice=%s packet=%s',
                           e.id, packet.is_slice, packet.payload.hex())
             packet.read_and_apply(e)
+        else:
+            ret = "U"
+        return ret

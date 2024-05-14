@@ -95,9 +95,10 @@ class ReplayReader(object):
             engine_data = json.loads(f.read(block_size))
             try:
                 replay_name = os.path.basename(self._replay_path)
-                json_name = '{}.0.json'.format(replay_name)
-                with open(json_name, 'w') as df:
-                    json.dump(engine_data, df, indent=4)
+                json_name = os.path.join(os.path.dirname(self._replay_path), '{}.0.json'.format(replay_name))
+                with open(json_name, 'wb') as df:
+                    df.write(json.dumps(engine_data, indent=4).encode('ascii').decode('unicode-escape').encode("utf-8"))
+                    # json.dump(engine_data, df, indent=4)
             except IOError as e:
                 logging.error('Cannot dump replay json to {}: {}'.format(json_name, e))
 
@@ -110,9 +111,11 @@ class ReplayReader(object):
                     try:
                         data = json.loads(block)
                         replay_name = os.path.basename(self._replay_path)
-                        json_name = '{}.{}.json'.format(replay_name, i+1)
-                        with open(json_name, 'w') as df:
-                            json.dump(data, df, indent=4)
+                        json_name = os.path.join(os.path.dirname(self._replay_path), '{}.{}.json'.format(replay_name, i+1))
+
+                        with open(json_name, 'wb') as df:
+                            df.write(json.dumps(data, indent=4).encode('ascii').decode('unicode-escape').encode("utf-8"))
+                            # json.dump(data, df, indent=4)
                     except IOError as e:
                         logging.error('Cannot dump extra replay json to {}: {}'.format(json_name, e))
 
@@ -128,15 +131,20 @@ class ReplayReader(object):
                 game = 'wowp'
             else:
                 raise
+            blockPtr = f.tell()
+            unpackedSize = struct.unpack("i", f.read(4))[0]
+            packedSize = struct.unpack("i", f.read(4))[0]
 
-            if is_compressed:
-                decrypted = self.__decrypt_data(f.read())
-                decrypted_data = zlib.decompress(decrypted)
-            else:
-                decrypted_data = f.read()
-
-            if self._dump_binary_data:
-                self._save_decrypted_data(decrypted_data)
+            decrypted_data = self._load_decrypted_data()
+            if decrypted_data is None or len(decrypted_data) < unpackedSize:
+                f.seek(blockPtr)
+                if is_compressed:
+                    decrypted = self.__decrypt_data(f.read())
+                    decrypted_data = zlib.decompress(decrypted)
+                    if self._dump_binary_data:
+                        self._save_decrypted_data(decrypted_data)
+                else:
+                    decrypted_data = f.read()
 
             return ReplayInfo(
                 game=game,
@@ -144,6 +152,19 @@ class ReplayReader(object):
                 extra_data=extra_data,
                 decrypted_data=decrypted_data,
             )
+
+    def _load_decrypted_data(self):
+        """ check if it has already been done earlier"""
+        try:
+            replay_name = os.path.basename(self._replay_path)
+            hexdumpFile = os.path.join(os.path.dirname(self._replay_path), '{}.hex'.format(replay_name))
+
+            if not os.path.exists(hexdumpFile):
+                return
+            with open(hexdumpFile, 'rb') as df:
+                return df.read()
+        except IOError as e:
+            print('Cannot load hex dumped replay data file {} due to : {}'.format(hexdumpFile, e))
 
     def _save_decrypted_data(self, decrypted_data):
         """
@@ -154,7 +175,9 @@ class ReplayReader(object):
         """
         try:
             replay_name = os.path.basename(self._replay_path)
-            with open('{}.hex'.format(replay_name), 'wb') as df:
+            hexdumpFile = os.path.join(os.path.dirname(self._replay_path), '{}.hex'.format(replay_name))
+
+            with open(hexdumpFile, 'wb') as df:
                 df.write(decrypted_data)
         except IOError as e:
             print('Cannot dump replay: {}'.format(e))

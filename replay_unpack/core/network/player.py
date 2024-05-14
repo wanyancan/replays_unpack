@@ -3,7 +3,7 @@
 import logging
 from abc import ABC
 from io import BytesIO
-
+import os
 from .net_packet import NetPacket
 
 
@@ -22,24 +22,39 @@ class PlayerBase:
     def _deserialize_packet(self, packet: NetPacket):
         if packet.type in self._mapping:
             return self._mapping[packet.type](packet.raw_data)
-        logging.info('unknown packet %s %s', hex(packet.type), str(packet.raw_data.read().hex()))
+        logging.info('[U] {:4.3f} type: 0x{:02X} size:{:4d}\t|{}'.format(packet.time, packet.type, packet.size, packet.raw_data.read().hex(' ')))
         return None
 
     def _process_packet(self, time, packet):
         raise NotImplementedError
 
-    def play(self, replay_data, strict_mode=False):
+    def play(self, replay_data, strict_mode=False, dumpfname=None):
         io = BytesIO(replay_data)
+        dumpsplit = None
+        if dumpfname is not None:
+            dumpsplit = open(dumpfname, 'w')
+
         while io.tell() != len(replay_data):
             packet = NetPacket(io)
+
+            state = "E"
             try:
-                self._process_packet(packet.time, self._deserialize_packet(packet))
+                state = self._process_packet(packet.time, self._deserialize_packet(packet))
+                if dumpfname is not None:
+                    packet.raw_data.seek(0)
+                    dumpsplit.write("{:6d}[{}] {:4.3f} type: 0x{:02X} size:{:4d}\t|{}\n".format(
+                        packet.index, state, packet.time, packet.type, packet.size,
+                        packet.raw_data.read().hex(" ")))
             except Exception:
-                logging.exception("Problem with packet at time:%s, type::%s, packetClass:%s",
-                                  packet.time, packet.type, self._mapping.get(packet.type))
                 packet.raw_data.seek(0)
-                logging.exception('packet %s %s', hex(packet.type), str(packet.raw_data.read().hex()))
-                if strict_mode:
+                logging.exception("{:6d}[{}] {:4.3f} type: 0x{:02X} size:{:4d}\t|{}\npacketClass: {}".format(
+                    packet.index, state, packet.time, packet.type, packet.size, packet.raw_data.read().hex(" "),
+                    self._mapping.get(packet.type)))
+                packet.raw_data.seek(0)
+                dumpsplit.write("{:6d}[{}] {:4.3f} type: 0x{:02X} size:{:4d}\t|{}\n".format(
+                    packet.index, state, packet.time, packet.type, packet.size,
+                    packet.raw_data.read().hex(" ")))
+                if strict_mode and dumpfname is None:
                     raise
 
 

@@ -7,7 +7,7 @@ from lxml import etree
 from .constants import ENTITIES_DEFS_PATH
 from .data_types import Alias
 from .entity_description import EntityDef
-
+import logging
 
 class Definitions:
     def __init__(self, base_dir):
@@ -16,6 +16,9 @@ class Definitions:
         self._entity_defs_by_name: Dict[str, EntityDef] = {}
         self._entity_defs_by_index: Dict[int, EntityDef] = {}
         self._parse(base_dir)
+        logging.info("Def parsed {} entities done from {}".format(len(self._entity_defs_by_index), base_dir))
+        for entind, ent in self._entity_defs_by_index.items():
+            logging.info("Entity type 0x%02x, %s", entind, ent._name)
 
     def get_entity_def_by_name(self, name):
         return self._entity_defs_by_name[name]
