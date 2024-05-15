@@ -115,7 +115,11 @@ class Entity:
 
     def call_client_method(self, exposed_index: int, payload: BytesIO):
         method = self._methods[exposed_index]
-        logging.debug('calling %s method %s', self._spec.get_name(), method)
+
+        if exposed_index in [0x27, 0x01, 0x0a, 0x03, 0x08]:
+            logging.debug('calling %s method[0x%x] %s', self._spec.get_name(), exposed_index, method)
+        else:
+            logging.debug('calling %s method %s', self._spec.get_name(), method)
         method_hash = self._spec.get_name() + '_' + method.get_name()
 
         subscriptions = Entity._methods_subscriptions.get(method_hash, [])
@@ -132,8 +136,13 @@ class Entity:
                 raise
 
     def set_client_property(self, exposed_index, payload: BytesIO):
-        logging.debug('requested property %s of entity %s', exposed_index, self._spec.get_name())
         prop = self.client_properties[exposed_index]
+
+        if exposed_index not in [0x1,0xd,0xf,0x12,0x1a,0x4,0xa,0xe,0x10,0x1d,0x1e,0x5,0x20,0x21,
+                                 0x0,0x2,0x3,0x1b]:
+            logging.info('calling Entity %s Property[0x%x] %s', self._spec.get_name(), exposed_index, prop)
+
+        logging.debug('requested property %s of entity %s', exposed_index, self._spec.get_name())
         value = prop.create_from_stream(payload)
         logging.debug('setting %s client property %s with "%s"', self._spec.get_name(), prop, value)
         self.properties['client'][prop.get_name()] = value
