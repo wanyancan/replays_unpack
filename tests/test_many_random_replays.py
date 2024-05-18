@@ -15,7 +15,7 @@ REPLAYS = glob.glob(os.path.join(BASE_DIR, 'data', 'random_replays', '*/*.wowsre
 import logging
 
 # Configure logging to display all levels of messages
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 @ddt
 class TestRandomReplays(TestCase):

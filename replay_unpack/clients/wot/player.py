@@ -13,7 +13,7 @@ from .network.packets import (
     Map,
     BasePlayerCreate,   # 0
     CellPlayerCreate,   # 1
-    EntityCreate,       # 5
+    WoTEntityCreate,       # 5
     Position,           # 0a
     EntityMethod,       # 08
     EntityProperty,     # 07
@@ -92,18 +92,24 @@ class ReplayPlayer(ControlledPlayerBase):
         elif isinstance(packet, EntityLeave):
             self._battle_controller.entities[packet.entityId].is_in_aoi = False
 
-        elif isinstance(packet, EntityCreate):
+        elif isinstance(packet, WoTEntityCreate):
             entity = Entity(
                 id_=packet.entityID,
                 spec=self._definitions.get_entity_def_by_index(packet.type))
-
-            values = packet.state.io()
-            values_count, = struct.unpack('B', values.read(1))
-            for i in range(values_count):
-                k = values.read(1)
-                idx, = struct.unpack('B', k)
-                entity.set_client_property(idx, values)
-            assert values.read() == b''
+            entityname = entity.get_name()
+            if entityname not in ['Vehicle']:
+                ret = "I"
+            else:
+                ret = "V"
+                # values = packet.state.io()
+                logging.info("vehicle {} pos：{} dir: {}".format(packet.entityID, packet.position, packet.direction))
+                # if values.tell() == 0:
+                #     values_count, = struct.unpack('B', values.read(1))
+                #     for i in range(values_count):
+                #         k = values.read(1)
+                #         idx, = struct.unpack('B', k)
+                #         entity.set_client_property(idx, values)
+                #     assert values.read() == b''
             self._battle_controller.create_entity(entity)
 
         elif isinstance(packet, Position):
@@ -122,11 +128,14 @@ class ReplayPlayer(ControlledPlayerBase):
 
         elif isinstance(packet, NestedProperty):
             e = self._battle_controller.entities[packet.entity_id]
-
-            logging.debug('')
-            logging.debug('nested property request for id=%s isSlice=%s packet=%s',
-                          e.id, packet.is_slice, packet.payload.hex())
-            packet.read_and_apply(e)
+            ename = e.get_name()
+            if ename in ['Vehicle']:
+                logging.debug('')
+                logging.debug('nested property request for id=%s isSlice=%s packet=%s',
+                              e.id, packet.is_slice, packet.payload.hex())
+                packet.read_and_apply(e)
+            elif ename in ['AreaDestructibles']:
+                logging.info('Nested for {} ignored type: {}'.format(e.id, ename))
         else:
             ret = "U"
         return ret

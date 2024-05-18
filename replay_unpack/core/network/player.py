@@ -21,6 +21,11 @@ class PlayerBase:
 
     def _deserialize_packet(self, packet: NetPacket):
         if packet.type in self._mapping:
+            if packet.type == 0x05:     # EntityCreate
+                if packet.size == 46:
+                    return self._mapping[packet.type](packet.raw_data, self)
+                else:
+                    return self._mapping[packet.type](packet.raw_data, self)
             return self._mapping[packet.type](packet.raw_data)
         logging.debug('[U] {:4.3f} type: 0x{:02X} size:{:4d}\t|{}'.format(packet.time, packet.type, packet.size, packet.raw_data.read().hex(' ')))
         return None

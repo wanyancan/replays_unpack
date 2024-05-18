@@ -10,7 +10,7 @@ from replay_unpack.core.packets import (
     Position
 )
 from .CellPlayerCreate import CellPlayerCreate
-from .EntityCreate import EntityCreate
+from .WoTEntityCreate import WoTEntityCreate
 from .Map import Map
 
 PACKETS_MAPPING = {
@@ -19,7 +19,7 @@ PACKETS_MAPPING = {
     0x2: EntityControl,
     0x3: EntityEnter,
     0x4: EntityLeave,
-    0x5: EntityCreate,
+    0x5: WoTEntityCreate,
     # 0x6
     0x7: EntityProperty,
     0x8: EntityMethod,
@@ -32,7 +32,7 @@ __all__ = [
     'EntityMethod',
     'Map',
     'Position',
-    'EntityCreate',
+    'WoTEntityCreate',
     'EntityEnter',
     'EntityLeave',
     'EntityControl',

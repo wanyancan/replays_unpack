@@ -13,9 +13,10 @@ class NestedProperty(PrettyPrintObjectMixin):
     def __init__(self, stream):
         self.entity_id, = struct.unpack('I', stream.read(4))
         self.is_slice = struct.unpack('b', stream.read(1))[0] == 1
-        self.payload_size, = struct.unpack('b', stream.read(1))
+        self.payload_size, = struct.unpack('I', stream.read(4))
 
-        self.u = stream.read(3)  # unknown
+        #payload is 4bytes
+        # self.u = stream.read(3)  # unknown
         self.payload = stream.read()
         assert len(self.payload) == self.payload_size
 
@@ -24,7 +25,10 @@ class NestedProperty(PrettyPrintObjectMixin):
         obj = entity
         prop_path = []
 
-        while bit_reader.get(1) and obj:
+        while obj:
+            bvalue = bit_reader.get(1)
+            if not bvalue:
+                break
             l = len(obj.client_properties) if isinstance(obj, Entity) else len(obj)
             max_bits = BitReader.bits_required(l)
             property_id = bit_reader.get(max_bits)
@@ -33,6 +37,9 @@ class NestedProperty(PrettyPrintObjectMixin):
                 obj = obj[field]
             elif isinstance(obj, Entity):
                 field = obj.client_properties[property_id].get_name()
+                if field not in obj.properties['client']:
+                    logging.info("entity {} nested prop {} not found".format(entity.id, field))
+                    continue
                 # FIXME: what about cell and base properties?
                 obj = obj.properties['client'][field]
             else:
@@ -98,4 +105,6 @@ class NestedProperty(PrettyPrintObjectMixin):
             entity.set_client_nested_property(prop_path, obj) 
             logging.debug('new list object: %s', obj)
         else:
-            raise NotImplementedError(type(obj))
+            rest = bit_reader.get_rest()
+            logging.info('nested package ignored for {}, bytes {}'.format(entity.id, rest.hex(' ')))
+            # raise NotImplementedError(type(obj))

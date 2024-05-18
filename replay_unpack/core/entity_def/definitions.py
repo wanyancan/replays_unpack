@@ -19,6 +19,7 @@ class Definitions:
         logging.info("Def parsed {} entities done from {}".format(len(self._entity_defs_by_index), base_dir))
         for entind, ent in self._entity_defs_by_index.items():
             logging.info("Entity type 0x%02x, %s", entind, ent._name)
+        logging.info("class Definitions __init__() done\n======================")
 
     def get_entity_def_by_name(self, name):
         return self._entity_defs_by_name[name]

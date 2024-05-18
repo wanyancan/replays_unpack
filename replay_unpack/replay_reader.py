@@ -7,7 +7,7 @@ from io import BytesIO
 from typing import NamedTuple
 import logging
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 from Cryptodome.Cipher import Blowfish
 
